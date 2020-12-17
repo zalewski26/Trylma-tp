@@ -14,7 +14,6 @@ public class BoardClient {
     Socket socket;
     Scanner input;
     PrintWriter output;
-    boolean marked = false;
 
     public BoardClient() throws Exception {
         socket = new Socket("localhost", 59090);
@@ -22,23 +21,15 @@ public class BoardClient {
         output = new PrintWriter(socket.getOutputStream(), true);
 
         panel = new BoardPanel();
-
         panel.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                for (int i = 0; i < 13; i++){
-                    for (int j = 0; j < 17; j++){
-                        if (panel.getBoard()[i][j].contains(e.getX(), e.getY())){
-                            if (marked){
-                                currentCircle[0] = i;
-                                currentCircle[1] = j;
-                                output.println("MOVE " + i + " " + j);
-                            }
-                            else{
-                                currentCircle[0] = i;
-                                currentCircle[1] = j;
-                                output.println("MARK " + i + " " + j);
-                            }
+                for (int row = 0; row < panel.getBoard().length; row++){
+                    for (int column = 0; column < panel.getBoard()[row].length; column++){
+                        if (panel.getBoard()[row][column].contains(e.getX(), e.getY())){
+                            currentCircle[0] = row;
+                            currentCircle[1] = column;
+                            output.println("CLICK " + row + " " + column);
                         }
                     }
                 }
@@ -52,29 +43,29 @@ public class BoardClient {
     public void play() throws Exception {
         try{
             var response = input.nextLine();
-            var id = Integer.parseInt(String.valueOf(response.charAt(8)));
-            var opponentId = id == 1 ? 2 : 1;
+            var id = Integer.parseInt(response);
             frame.setTitle("Game: Player " + id);
 
             while (input.hasNextLine()){
                 response = input.nextLine();
 
                 if (response.startsWith("VALID_MARK")){
-                    label.setText("Valid mark, please wait");
-                    marked = true;
-                    panel.mark(currentCircle[0], currentCircle[1]);
+                    panel.mark(currentCircle[0], currentCircle[1], true);
                 }
                 else if (response.startsWith("VALID_MOVE")) {
-                    label.setText("Valid move, please wait");
                     panel.makeMove(currentCircle[0], currentCircle[1]);
-                    marked = false;
+                    label.setText("Good move, now wait!");
                 }
-                else if (response.startsWith("OPPONENT_MOVED")) {
-                    String str = response.substring(15);
+                else if (response.startsWith("OTHER_MARK")){
+                    String str = response.substring(11);
                     String[] arr = str.split("\\s+");
-                    panel.oppMove(Integer.parseInt(arr[0]), Integer.parseInt(arr[1]),
-                            Integer.parseInt(arr[2]), Integer.parseInt(arr[3]), opponentId);
-                    label.setText("Opponent moved, your turn");
+                    panel.mark(Integer.parseInt(arr[0]), Integer.parseInt(arr[1]), false);
+                }
+                else if (response.startsWith("OTHER_MOVE")){
+                    String str = response.substring(11);
+                    String[] arr = str.split("\\s+");
+                    panel.makeMove(Integer.parseInt(arr[0]), Integer.parseInt(arr[1]));
+                    label.setText("Opponent moved, your turn!");
                 }
                 else if (response.startsWith("MESSAGE")) {
                     label.setText(response.substring(8));

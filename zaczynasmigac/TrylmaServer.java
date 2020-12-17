@@ -5,12 +5,12 @@ public class TrylmaServer {
 
     public static void main(String[] args) throws Exception {
         try (var listener = new ServerSocket(59090)) {
-            System.out.println("My server is running...");
+            System.out.println("Trylma server is running...");
             var pool = Executors.newFixedThreadPool(2);
             while (true) {
-                myGame game = new myGame();
+                TrylmaGame game = new TrylmaGame();
                 pool.execute(game.new playerHandler(listener.accept(), 1));
-                pool.execute(game.new playerHandler(listener.accept(), 2));
+                pool.execute(game.new playerHandler(listener.accept(), 6));
             }
         }
     }
